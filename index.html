@@ -8,7 +8,14 @@
     <title>Cairn</title>
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%2321201d'/><g fill='%23f6f3ed'><ellipse cx='16' cy='23.8' rx='9.5' ry='3.5' transform='rotate(2 16 23.8)'/><ellipse cx='15' cy='14.8' rx='7' ry='2.9' transform='rotate(-3.5 15 14.8)'/><ellipse cx='17' cy='6.9' rx='4.5' ry='2.3' transform='rotate(5 17 6.9)'/></g></svg>" />
-    <link rel="apple-touch-icon" href="./icon.svg" />
+    <!-- iOS ignores SVG touch icons: without a PNG a Home Screen install shows
+         a screenshot of the page instead of the mark. Full bleed and opaque,
+         because iOS applies its own rounded mask. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Cairn" />
   </head>
   <body>
     <div id="root"></div>
