@@ -1,11 +1,16 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Bookmark } from '../types';
 import type { MatchField } from '../lib/search';
 import { MATCH_FIELD_LABELS } from '../lib/search';
 import { useLibrary } from '../context/LibraryContext';
+import { useUi } from '../context/UiContext';
 import { useOpenSite } from '../hooks/useOpenSite';
+import { useBookmarkActions } from '../hooks/useBookmarkActions';
 import { Favicon } from './Favicon';
 import { Icon } from './Icon';
+import { Menu } from './Menu';
+import { ConfirmDialog } from './ConfirmDialog';
 import { formatRelative } from '../lib/time';
 import { prettyUrl } from '../lib/url';
 import styles from './bookmarks.module.css';
@@ -18,8 +23,11 @@ interface BookmarkRowProps {
 }
 
 export function BookmarkRow({ bookmark, matchedFields = [], onAddNote }: BookmarkRowProps) {
-  const { categoryById, tagById, toggleFavorite } = useLibrary();
+  const { categoryById, tagById, toggleFavorite, deleteBookmark } = useLibrary();
+  const { openEditBookmark, notify } = useUi();
+  const { copyLink, openInBrave } = useBookmarkActions();
   const openSite = useOpenSite();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const category = bookmark.categoryId ? categoryById.get(bookmark.categoryId) : undefined;
   const tags = bookmark.tagIds.map((id) => tagById.get(id)).filter((tag) => tag !== undefined);
@@ -120,7 +128,33 @@ export function BookmarkRow({ bookmark, matchedFields = [], onAddNote }: Bookmar
         >
           <Icon name={bookmark.isFavorite ? 'starFilled' : 'star'} />
         </button>
+
+        <Menu
+          label={`More actions for ${bookmark.title}`}
+          items={[
+            { label: 'Copy link', onSelect: () => void copyLink(bookmark) },
+            { label: 'Open in Brave', onSelect: () => void openInBrave(bookmark) },
+            { label: 'Edit', onSelect: () => openEditBookmark(bookmark), separatorBefore: true },
+            { label: 'Delete', onSelect: () => setConfirmDelete(true), danger: true },
+          ]}
+        />
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete bookmark?"
+        description={`This will remove ${bookmark.title} and its ${bookmark.notes.length} ${
+          bookmark.notes.length === 1 ? 'note' : 'notes'
+        } from your local library. This cannot be undone.`}
+        confirmLabel="Delete bookmark"
+        danger
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => {
+          setConfirmDelete(false);
+          deleteBookmark(bookmark.id);
+          notify(`${bookmark.title} was deleted.`);
+        }}
+      />
     </article>
   );
 }

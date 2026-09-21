@@ -4,6 +4,7 @@ import type { BookmarkNote } from '../types';
 import { useLibrary } from '../context/LibraryContext';
 import { useUi } from '../context/UiContext';
 import { useOpenSite } from '../hooks/useOpenSite';
+import { useBookmarkActions } from '../hooks/useBookmarkActions';
 import { Favicon } from '../components/Favicon';
 import { Icon } from '../components/Icon';
 import { EmptyState } from '../components/EmptyState';
@@ -20,6 +21,7 @@ export function BookmarkDetailPage() {
   const { bookmarks, categoryById, tagById, toggleFavorite, deleteBookmark, addNote, updateNote, deleteNote } =
     useLibrary();
   const { openEditBookmark, notify } = useUi();
+  const { copyLink, openInBrave } = useBookmarkActions();
   const openSite = useOpenSite();
 
   const [noteOpen, setNoteOpen] = useState(false);
@@ -97,6 +99,18 @@ export function BookmarkDetailPage() {
           }}
         >
           Add note
+        </button>
+        <button type="button" className={ui.btn} onClick={() => void copyLink(bookmark)}>
+          <Icon name="copy" size={13} />
+          Copy link
+        </button>
+        <button
+          type="button"
+          className={ui.btn}
+          onClick={() => void openInBrave(bookmark)}
+          title="Asks your system to open this link in Brave"
+        >
+          Open in Brave
         </button>
       </div>
 

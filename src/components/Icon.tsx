@@ -21,7 +21,9 @@ export type IconName =
   | 'check'
   | 'trash'
   | 'edit'
-  | 'note';
+  | 'note'
+  | 'more'
+  | 'copy';
 
 const PATHS: Record<IconName, JSX.Element> = {
   search: (
@@ -80,6 +82,19 @@ const PATHS: Record<IconName, JSX.Element> = {
     <>
       <path d="M3.5 2.5h9v11h-9z" />
       <path d="M5.8 5.6h4.4M5.8 8h4.4M5.8 10.4h2.6" />
+    </>
+  ),
+  more: (
+    <>
+      <circle cx="3.6" cy="8" r="1.05" fill="currentColor" stroke="none" />
+      <circle cx="8" cy="8" r="1.05" fill="currentColor" stroke="none" />
+      <circle cx="12.4" cy="8" r="1.05" fill="currentColor" stroke="none" />
+    </>
+  ),
+  copy: (
+    <>
+      <rect x="5.5" y="5.5" width="8" height="8" rx="1.2" />
+      <path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2" />
     </>
   ),
 };

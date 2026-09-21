@@ -98,6 +98,15 @@ results page. Typing a query matches a small built-in directory of well known
 sites for instant starting points, surfaces anything already in your library, and
 offers the same query as a real search in a new tab.
 
+**Opening links.** Every bookmark has Open, which uses your default browser,
+plus Copy link and Open in Brave behind the row's More menu. A web page cannot
+choose which browser handles a link, so Open in Brave asks the operating system
+to handle a `brave://open-url` link (an `intent://` link on Android). That works
+when the current browser will pass it on, such as Brave on iOS or a non Chromium
+browser on the desktop, and Chromium based browsers block it silently. Since
+success cannot be detected, the address is copied to your clipboard at the same
+time and the confirmation says so rather than claiming it worked.
+
 **Favicons are opt-in.** Fetching them would tell a third party which sites you
 have saved, so a letter mark is used until you turn the setting on in Settings.
 
