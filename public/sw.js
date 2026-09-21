@@ -6,12 +6,25 @@
   picked up immediately, with the cached page as the fallback. Build assets
   carry content hashes in their names, so they are safe to serve from cache.
 */
-const CACHE = 'cairn-v1';
+const CACHE = 'cairn-v2';
 const OFFLINE_URL = 'index.html';
+
+/* The Latin faces are precached so a first offline launch looks right.
+   Latin Extended is left to the runtime cache: it only downloads when a
+   character actually needs it. */
+const PRECACHE = [
+  OFFLINE_URL,
+  'manifest.webmanifest',
+  'icon.svg',
+  'fonts/newsreader-latin-400-600.woff2',
+  'fonts/mulish-latin-400-700.woff2',
+  'fonts/dm-mono-latin-400.woff2',
+  'fonts/dm-mono-latin-500.woff2',
+];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll([OFFLINE_URL, 'manifest.webmanifest', 'icon.svg'])),
+    caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)),
   );
   self.skipWaiting();
 });

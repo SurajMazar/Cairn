@@ -138,6 +138,13 @@ connection. Navigations go to the network first, so a new deploy is picked up
 straight away. It is registered only in a production build, and registration
 failures are swallowed: the app works fine without it.
 
+**No third-party requests.** The webfonts are self-hosted from `public/fonts`,
+so with the favicon setting off Cairn loads nothing from anyone else. That keeps
+the typography intact offline, where the service worker only caches same-origin
+requests, and behind a content blocker, where privacy filter lists routinely
+block `fonts.googleapis.com`. It also means an ad blocker has nothing to block
+in the app itself; what it filters is whatever you open from here.
+
 ## Your data
 
 Settings has export, which writes everything to one JSON file, and import, which
