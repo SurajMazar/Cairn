@@ -117,9 +117,15 @@ instead of an empty rectangle, and always keeps "Open in a new tab" visible for
 the cases the list misses. Saving to your library works either way.
 
 **Web search.** Without a server there is no way to read a search engine's
-results page. Typing a query matches a small built-in directory of well known
-sites for instant starting points, surfaces anything already in your library, and
-offers the same query as a real search in a new tab.
+results page, so a query goes straight out to a real browser tab rather than
+being faked in-app. It is reachable in one action from the home field, from a
+no-match result, from the mobile bar and from the Web view.
+
+Google is the default. Worth knowing on a phone: the Google apps claim
+`google.com/search` as a deep link, so the system can hand your search to the
+app instead of a browser tab, and a web page has no way to refuse that. Settings
+offers Brave Search, DuckDuckGo and Startpage, none of which are claimed by an
+installed app.
 
 **Opening links.** Every bookmark has Open, which uses your default browser,
 plus Copy link and Open in Brave behind the row's More menu. A web page cannot
@@ -137,6 +143,13 @@ have saved, so a letter mark is used until you turn the setting on in Settings.
 connection. Navigations go to the network first, so a new deploy is picked up
 straight away. It is registered only in a production build, and registration
 failures are swallowed: the app works fine without it.
+
+**Updates.** A new build installs in the background and then waits. Nothing is
+swapped until you accept the prompt, because a worker that takes over
+immediately can leave a half-updated app in front of someone mid-task. Accepting
+hands over to the waiting worker and reloads once it is in control. Installed
+copies re-check whenever you come back to the app, and Settings has a manual
+check.
 
 **No third-party requests.** The webfonts are self-hosted from `public/fonts`,
 so with the favicon setting off Cairn loads nothing from anyone else. That keeps

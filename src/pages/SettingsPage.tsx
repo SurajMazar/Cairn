@@ -5,6 +5,7 @@ import { useLibrary } from '../context/LibraryContext';
 import { useUi } from '../context/UiContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { isStandalone } from '../hooks/useOpenSite';
+import { applyUpdate, checkForUpdate, isSupported, isUpdateReady } from '../lib/serviceWorker';
 import { SORT_LABELS } from '../lib/search';
 import { buildExport, downloadJson, exportFilename, parseImport, type ImportReport } from '../storage/transfer';
 import { STORAGE_VERSION } from '../storage';
@@ -47,6 +48,9 @@ export function SettingsPage() {
   const [pendingData, setPendingData] = useState<LibraryData | null>(null);
   const [confirmReplace, setConfirmReplace] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'update' | 'current' | 'failed' | 'unsupported'>(
+    isUpdateReady() ? 'update' : 'idle',
+  );
 
   const noteCount = bookmarks.reduce((total, bookmark) => total + bookmark.notes.length, 0);
   const installed = isStandalone();
@@ -289,6 +293,43 @@ export function SettingsPage() {
               Load the sample library
             </button>
           </>
+        ) : null}
+      </section>
+
+      <section className={styles.block}>
+        <h2 className={styles.blockTitle}>Version</h2>
+        <p className={styles.blockBody}>
+          {isSupported()
+            ? 'A new version downloads in the background and waits until you accept it, so an update never interrupts what you are doing. Installed copies check on their own each time you come back to the app.'
+            : 'This browser does not support background updates, so reloading the page is enough to pick up a new version.'}
+        </p>
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={ui.btn}
+            disabled={updateState === 'checking'}
+            onClick={async () => {
+              setUpdateState('checking');
+              setUpdateState(await checkForUpdate());
+            }}
+          >
+            {updateState === 'checking' ? 'Checking...' : 'Check for updates'}
+          </button>
+          {updateState === 'update' ? (
+            <button type="button" className={`${ui.btn} ${ui.btnPrimary}`} onClick={applyUpdate}>
+              Reload to update
+            </button>
+          ) : null}
+        </div>
+        {updateState === 'current' ? <p className={ui.hint}>You are on the latest version.</p> : null}
+        {updateState === 'unsupported' ? (
+          <p className={ui.hint}>
+            No background updater is running here. That is normal in development and on a browser
+            without service worker support; reload the page to pick up a new version.
+          </p>
+        ) : null}
+        {updateState === 'failed' ? (
+          <p className={ui.hint}>Could not reach the server to check. Try again when you are online.</p>
         ) : null}
       </section>
 

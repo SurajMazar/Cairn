@@ -26,7 +26,14 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE).then((cache) => cache.addAll(PRECACHE)),
   );
-  self.skipWaiting();
+  /* No skipWaiting here on purpose. A new worker that activates immediately
+     swaps assets under a page that is already running, which can leave a
+     half-updated app. It waits until the page asks, which happens when the
+     user accepts the update prompt. */
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {

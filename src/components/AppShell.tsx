@@ -4,6 +4,7 @@ import { useLibrary } from '../context/LibraryContext';
 import { useUi } from '../context/UiContext';
 import { Sidebar } from './Sidebar';
 import { Icon } from './Icon';
+import { UpdateBanner } from './UpdateBanner';
 import styles from './shell.module.css';
 import ui from '../styles/ui.module.css';
 
@@ -81,6 +82,8 @@ export function AppShell() {
             Add
           </button>
         </header>
+
+        <UpdateBanner />
 
         {storageAvailable ? null : (
           <p className={styles.warning}>
