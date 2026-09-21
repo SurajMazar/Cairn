@@ -27,6 +27,7 @@ const VIEWS: Array<{ value: ViewMode; label: string }> = [
 const OPEN_MODES: Array<{ value: OpenLinksIn; label: string }> = [
   { value: 'newTab', label: 'New tab' },
   { value: 'sameTab', label: 'Same window' },
+  { value: 'systemBrowser', label: 'Default browser' },
 ];
 
 export function SettingsPage() {
@@ -152,25 +153,26 @@ export function SettingsPage() {
             <p className={styles.settingName}>Open saved websites in</p>
             <p className={styles.settingHint}>
               {installed
-                ? 'You are running this as an installed app. A new tab hands the link to an in-app browser you can back out of; same window replaces this view and relies on the back gesture to return. Your library is untouched either way.'
-                : 'A new tab keeps this page where it is. Same window replaces it, which suits an installed app on a phone.'}
+                ? 'You are running this as an installed app, which is its own browser container. New tab and same window both stay inside it, so content blockers and logins from your real browser do not apply. Default browser pushes the link out to where they do.'
+                : 'A new tab keeps this page where it is. Same window replaces it. Default browser matters mainly once this is installed as an app.'}
+              {preferences.openLinksIn === 'systemBrowser'
+                ? ' No standard way exists for a page to choose a browser, so this asks the system and falls back to opening the link here if nothing picks it up. Worth checking once on your device that it lands where you expect.'
+                : ''}
             </p>
           </div>
-          <div className={styles.segmented} role="group" aria-label="Open saved websites in">
+          <select
+            className={ui.select}
+            style={{ width: 'auto' }}
+            value={preferences.openLinksIn}
+            onChange={(event) => setPreferences({ openLinksIn: event.target.value as OpenLinksIn })}
+            aria-label="Open saved websites in"
+          >
             {OPEN_MODES.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                className={`${styles.segment} ${
-                  preferences.openLinksIn === option.value ? styles.segmentOn : ''
-                }`}
-                onClick={() => setPreferences({ openLinksIn: option.value })}
-                aria-pressed={preferences.openLinksIn === option.value}
-              >
+              <option key={option.value} value={option.value}>
                 {option.label}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         </div>
 
         <div className={styles.setting}>

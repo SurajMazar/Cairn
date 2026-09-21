@@ -25,7 +25,7 @@ interface BookmarkRowProps {
 export function BookmarkRow({ bookmark, matchedFields = [], onAddNote }: BookmarkRowProps) {
   const { categoryById, tagById, toggleFavorite, deleteBookmark } = useLibrary();
   const { openEditBookmark, notify } = useUi();
-  const { copyLink, openInBrave } = useBookmarkActions();
+  const { copyLink, openInBrave, openInDefaultBrowser } = useBookmarkActions();
   const openSite = useOpenSite();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -133,6 +133,7 @@ export function BookmarkRow({ bookmark, matchedFields = [], onAddNote }: Bookmar
           label={`More actions for ${bookmark.title}`}
           items={[
             { label: 'Copy link', onSelect: () => void copyLink(bookmark) },
+            { label: 'Open in default browser', onSelect: () => openInDefaultBrowser(bookmark) },
             { label: 'Open in Brave', onSelect: () => void openInBrave(bookmark) },
             { label: 'Edit', onSelect: () => openEditBookmark(bookmark), separatorBefore: true },
             { label: 'Delete', onSelect: () => setConfirmDelete(true), danger: true },

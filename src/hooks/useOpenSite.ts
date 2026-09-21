@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import type { Bookmark } from '../types';
 import { useLibrary } from '../context/LibraryContext';
+import { openInSystemBrowser } from '../lib/externalBrowser';
 
 /** True when running as an installed app rather than inside a browser tab. */
 export function isStandalone(): boolean {
@@ -28,6 +29,13 @@ export function useOpenSite() {
 
   return useCallback(
     (bookmark: Bookmark) => {
+      if (preferences.openLinksIn === 'systemBrowser') {
+        // Same reason as below: the window may be handed away before a normal
+        // render would have committed the visit.
+        flushSync(() => recordVisit(bookmark.id));
+        openInSystemBrowser(bookmark.url);
+        return;
+      }
       if (preferences.openLinksIn === 'sameTab') {
         // Force the visit to reach localStorage before the window is handed
         // to another page, since this render may otherwise never commit.

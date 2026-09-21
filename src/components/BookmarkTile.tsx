@@ -13,7 +13,7 @@ import ui from '../styles/ui.module.css';
 export function BookmarkTile({ bookmark }: { bookmark: Bookmark }) {
   const { categoryById, toggleFavorite } = useLibrary();
   const { openEditBookmark } = useUi();
-  const { copyLink, openInBrave } = useBookmarkActions();
+  const { copyLink, openInBrave, openInDefaultBrowser } = useBookmarkActions();
   const category = bookmark.categoryId ? categoryById.get(bookmark.categoryId) : undefined;
 
   return (
@@ -34,7 +34,8 @@ export function BookmarkTile({ bookmark }: { bookmark: Bookmark }) {
             label={`More actions for ${bookmark.title}`}
             items={[
               { label: 'Copy link', onSelect: () => void copyLink(bookmark) },
-              { label: 'Open in Brave', onSelect: () => void openInBrave(bookmark) },
+              { label: 'Open in default browser', onSelect: () => openInDefaultBrowser(bookmark) },
+            { label: 'Open in Brave', onSelect: () => void openInBrave(bookmark) },
               { label: 'Edit', onSelect: () => openEditBookmark(bookmark), separatorBefore: true },
             ]}
           />

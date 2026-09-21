@@ -48,7 +48,7 @@ export type SortKey =
 
 export type ThemeChoice = 'system' | 'light' | 'dark';
 
-export type OpenLinksIn = 'newTab' | 'sameTab';
+export type OpenLinksIn = 'newTab' | 'sameTab' | 'systemBrowser';
 
 export type { SearchEngineId } from './lib/searchEngines';
 

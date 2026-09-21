@@ -3,7 +3,7 @@ import type { Bookmark } from '../types';
 import { useLibrary } from '../context/LibraryContext';
 import { useUi } from '../context/UiContext';
 import { copyText } from '../lib/clipboard';
-import { requestBrave } from '../lib/externalBrowser';
+import { openInSystemBrowser, requestBrave } from '../lib/externalBrowser';
 
 export function useBookmarkActions() {
   const { recordVisit } = useLibrary();
@@ -35,5 +35,13 @@ export function useBookmarkActions() {
     [notify, recordVisit],
   );
 
-  return { copyLink, openInBrave };
+  const openInDefaultBrowser = useCallback(
+    (bookmark: Bookmark) => {
+      recordVisit(bookmark.id);
+      openInSystemBrowser(bookmark.url);
+    },
+    [recordVisit],
+  );
+
+  return { copyLink, openInBrave, openInDefaultBrowser };
 }

@@ -60,6 +60,13 @@ website, because it is the one action that leaves the app:
   control that returns you to Cairn exactly where you were.
 - **Same window** navigates in place. You return with the system back gesture.
   This suits a phone if the in-app browser feels like too many layers.
+- **Default browser** pushes the link out of the app container entirely. This is
+  the one to pick if you run a content blocker: an installed web app is its own
+  browser container, so Safari extensions and content blockers do not apply to
+  anything it opens, and neither do your logins. There is no standard API for
+  choosing a browser, so this uses `x-safari-https` on iOS and a package-less
+  intent on Android, and falls back to opening the link in place if the system
+  does not pick it up.
 
 Settings has the choice, and says which one you are running under. Either way
 nothing is at risk: the library lives in `localStorage`, so even a full reload

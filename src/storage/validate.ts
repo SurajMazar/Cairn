@@ -132,7 +132,7 @@ export function normaliseTags(raw: unknown): Tag[] {
 }
 
 const THEMES: ThemeChoice[] = ['system', 'light', 'dark'];
-const OPEN_MODES: OpenLinksIn[] = ['newTab', 'sameTab'];
+const OPEN_MODES: OpenLinksIn[] = ['newTab', 'sameTab', 'systemBrowser'];
 const VIEW_MODES: ViewMode[] = ['list', 'grid'];
 const SORT_KEYS: SortKey[] = ['updated', 'added', 'visited', 'alpha', 'alphaReverse', 'notes'];
 
