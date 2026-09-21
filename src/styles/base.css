@@ -112,3 +112,16 @@ input[type='search']::-webkit-search-decoration {
   -webkit-appearance: none;
   appearance: none;
 }
+
+/*
+  Safari on iOS zooms the page in whenever a focused form control is smaller
+  than 16px, which is jarring and leaves the layout scaled afterwards. Pinning
+  controls to 16px on small screens is the standard way to stop it.
+*/
+@media (max-width: 52rem) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

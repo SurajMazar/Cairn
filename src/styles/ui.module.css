@@ -286,3 +286,20 @@ button.chip:hover {
   font-size: var(--text-sm);
   color: var(--ink-muted);
 }
+
+/* Touch targets. 32px icon buttons are fine with a pointer and too small for
+   a thumb, so they grow towards the 44px iOS guideline on small screens. */
+@media (max-width: 52rem) {
+  .iconBtn {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .btn {
+    padding: 0.5625rem 0.9375rem;
+  }
+
+  .btnSmall {
+    padding: 0.4375rem 0.8125rem;
+  }
+}
