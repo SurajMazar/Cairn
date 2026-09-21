@@ -248,12 +248,22 @@ export function SettingsPage() {
         </p>
 
         {bookmarks.length === 0 ? (
-          <button type="button" className={ui.btn} onClick={() => {
-            loadSampleData();
-            notify('Sample library loaded.');
-          }}>
-            Load the sample library
-          </button>
+          <>
+            <p className={styles.blockBody}>
+              A new library starts empty. If you want something to look at while trying the app out,
+              this fills it with fifteen example websites, with categories, tags and notes.
+            </p>
+            <button
+              type="button"
+              className={ui.btn}
+              onClick={() => {
+                loadSampleData();
+                notify('Sample library loaded.');
+              }}
+            >
+              Load the sample library
+            </button>
+          </>
         ) : null}
       </section>
 

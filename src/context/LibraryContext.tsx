@@ -4,7 +4,6 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -21,7 +20,6 @@ import {
   clearAll,
   isStorageAvailable,
   preferencesStorage,
-  seedFlag,
   tagStorage,
 } from '../storage';
 import { DEFAULT_PREFERENCES, reconcileReferences } from '../storage/validate';
@@ -87,20 +85,6 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>(() => categoryStorage.load());
   const [tags, setTags] = useState<Tag[]>(() => tagStorage.load());
   const [preferences, setPreferencesState] = useState<Preferences>(() => preferencesStorage.load());
-
-  // Seed once, and only into a genuinely untouched browser.
-  const seeded = useRef(false);
-  useEffect(() => {
-    if (seeded.current) return;
-    seeded.current = true;
-    if (seedFlag.isSeeded()) return;
-    seedFlag.mark();
-    if (bookmarks.length > 0 || categories.length > 0 || tags.length > 0) return;
-    const sample = buildSampleData();
-    setBookmarks(sample.bookmarks);
-    setCategories(sample.categories);
-    setTags(sample.tags);
-  }, [bookmarks.length, categories.length, tags.length]);
 
   useEffect(() => {
     bookmarkStorage.save(bookmarks);
@@ -335,14 +319,12 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
         setBookmarks(reconciled);
         setCategories(data.categories);
         setTags(data.tags);
-        seedFlag.mark();
         return { added: reconciled.length, updated: 0 };
       }
       const result = mergeLibraries({ bookmarks, categories, tags }, data);
       setBookmarks(reconcileReferences(result.bookmarks, result.categories, result.tags));
       setCategories(result.categories);
       setTags(result.tags);
-      seedFlag.mark();
       return { added: result.added, updated: result.updated };
     },
     [bookmarks, categories, tags],
@@ -350,7 +332,6 @@ export function LibraryProvider({ children }: { children: ReactNode }) {
 
   const resetLibrary = useCallback(() => {
     clearAll();
-    seedFlag.mark();
     setBookmarks([]);
     setCategories([]);
     setTags([]);

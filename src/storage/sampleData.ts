@@ -267,8 +267,8 @@ const BOOKMARKS: SampleBookmark[] = [
 ];
 
 /**
- * Realistic starting content so an empty browser does not open onto an empty
- * product. Every screen still works with none of this present.
+ * Demo content, loaded only when asked for from Settings. A new library starts
+ * genuinely empty; this exists for trying the app out or showing it to someone.
  */
 export function buildSampleData(): LibraryData {
   const categories: Category[] = CATEGORIES.map((name, index) => ({

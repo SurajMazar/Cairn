@@ -17,6 +17,8 @@ export const StorageKeys = {
   categories: 'weblibrary.categories',
   tags: 'weblibrary.tags',
   preferences: 'weblibrary.preferences',
+  /* Written by older versions that seeded sample data on first run. Nothing
+     reads it now; it stays listed so clearAll still removes it. */
   seeded: 'weblibrary.seeded',
 } as const;
 
