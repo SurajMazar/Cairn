@@ -136,7 +136,7 @@ export function BookmarkRow({ bookmark, matchedFields = [], onAddNote }: Bookmar
             { label: 'Copy link', onSelect: () => void copyLink(bookmark) },
             { label: 'Open in default browser', onSelect: () => openInDefaultBrowser(bookmark) },
             ...(canRequestBrave()
-              ? [{ label: 'Open in Brave', onSelect: () => void openInBrave(bookmark) }]
+              ? [{ label: 'Open in Brave', onSelect: () => openInBrave(bookmark) }]
               : []),
             { label: 'Edit', onSelect: () => openEditBookmark(bookmark), separatorBefore: true },
             { label: 'Delete', onSelect: () => setConfirmDelete(true), danger: true },

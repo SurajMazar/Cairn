@@ -32,14 +32,22 @@ export function isMobile(): boolean {
   return isIos() || isAndroid();
 }
 
-const HANDOFF_GRACE_MS = 1200;
+/*
+  iOS puts a confirmation in the way ("Open in Brave?"), and an unregistered
+  scheme raises an error alert. Both leave the page visible with no reliable
+  event, so a timer cannot tell a refused handoff from one the user has simply
+  not confirmed yet. The grace period is long enough to cover a deliberate tap.
+*/
+const HANDOFF_GRACE_MS = 2500;
 
 /**
- * Attempt `link`, and fall back to `fallbackUrl` if the page never goes away.
- * The fallback navigates rather than calling window.open, because by then the
- * user gesture has expired and a popup would be blocked.
+ * Attempt `link`, and report back if the page is still in front afterwards.
+ *
+ * Deliberately does not navigate on its own. An automatic fallback would race
+ * the system confirmation dialog and yank the page out from under someone who
+ * was about to accept it, so the caller is told instead and offers the choice.
  */
-function handOff(link: string, fallbackUrl: string): void {
+function handOff(link: string, onUnclaimed?: () => void): void {
   let left = false;
   const markLeft = () => {
     left = true;
@@ -51,7 +59,7 @@ function handOff(link: string, fallbackUrl: string): void {
   try {
     window.location.href = link;
   } catch {
-    /* the fallback below covers it */
+    /* onUnclaimed covers it */
   }
 
   window.setTimeout(() => {
@@ -59,7 +67,7 @@ function handOff(link: string, fallbackUrl: string): void {
     window.removeEventListener('pagehide', markLeft);
     window.removeEventListener('blur', markLeft);
     if (left || document.hidden) return;
-    window.location.href = fallbackUrl;
+    onUnclaimed?.();
   }, HANDOFF_GRACE_MS);
 }
 
@@ -90,10 +98,10 @@ export function canRequestBrave(): boolean {
   return isMobile();
 }
 
-export function requestBrave(rawUrl: string): void {
+export function requestBrave(rawUrl: string, onUnclaimed?: () => void): void {
   const url = parseUrl(rawUrl);
   if (!url) return;
-  handOff(braveLinkFor(url.href), url.href);
+  handOff(braveLinkFor(url.href), onUnclaimed);
 }
 
 /**
@@ -104,7 +112,7 @@ export function requestBrave(rawUrl: string): void {
  * opens. On iOS the x-safari-https scheme targets Safari specifically, since no
  * scheme exists for "whatever the default browser is".
  */
-export function openInSystemBrowser(rawUrl: string): void {
+export function openInSystemBrowser(rawUrl: string, onUnclaimed?: () => void): void {
   const url = parseUrl(rawUrl);
   if (!url) return;
 
@@ -117,5 +125,5 @@ export function openInSystemBrowser(rawUrl: string): void {
     ? `x-safari-${url.protocol.replace(':', '')}://${url.host}${url.pathname}${url.search}${url.hash}`
     : androidIntent(url);
 
-  handOff(link, url.href);
+  handOff(link, onUnclaimed);
 }

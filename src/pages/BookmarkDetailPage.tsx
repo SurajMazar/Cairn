@@ -109,7 +109,7 @@ export function BookmarkDetailPage() {
           <button
             type="button"
             className={ui.btn}
-            onClick={() => void openInBrave(bookmark)}
+            onClick={() => openInBrave(bookmark)}
             title="Asks your system to open this link in Brave"
           >
             Open in Brave

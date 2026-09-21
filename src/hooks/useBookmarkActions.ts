@@ -18,29 +18,35 @@ export function useBookmarkActions() {
   );
 
   /**
-   * The handoff cannot be confirmed, so the address goes to the clipboard at
-   * the same time and the message says so rather than claiming success.
+   * Nothing confirms a handoff, so instead of guessing, an unclaimed link comes
+   * back here and is offered plainly rather than opened behind the user's back.
    */
-  const openInBrave = useCallback(
-    async (bookmark: Bookmark) => {
-      const copied = await copyText(bookmark.url);
-      recordVisit(bookmark.id);
-      requestBrave(bookmark.url);
-      notify(
-        copied
-          ? 'Handing the link to Brave. It is on your clipboard if nothing opens.'
-          : 'Handing the link to Brave.',
-      );
+  const offerFallback = useCallback(
+    (bookmark: Bookmark, target: string) => {
+      notify(`${target} did not take the link.`, {
+        label: 'Open here',
+        onClick: () => {
+          window.location.href = bookmark.url;
+        },
+      });
     },
-    [notify, recordVisit],
+    [notify],
+  );
+
+  const openInBrave = useCallback(
+    (bookmark: Bookmark) => {
+      recordVisit(bookmark.id);
+      requestBrave(bookmark.url, () => offerFallback(bookmark, 'Brave'));
+    },
+    [recordVisit, offerFallback],
   );
 
   const openInDefaultBrowser = useCallback(
     (bookmark: Bookmark) => {
       recordVisit(bookmark.id);
-      openInSystemBrowser(bookmark.url);
+      openInSystemBrowser(bookmark.url, () => offerFallback(bookmark, 'Your browser'));
     },
-    [recordVisit],
+    [recordVisit, offerFallback],
   );
 
   return { copyLink, openInBrave, openInDefaultBrowser };

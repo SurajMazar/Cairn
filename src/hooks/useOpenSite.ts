@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { flushSync } from 'react-dom';
 import type { Bookmark } from '../types';
 import { useLibrary } from '../context/LibraryContext';
+import { useUi } from '../context/UiContext';
 import { openInSystemBrowser } from '../lib/externalBrowser';
 
 /** True when running as an installed app rather than inside a browser tab. */
@@ -26,6 +27,7 @@ export function isStandalone(): boolean {
  */
 export function useOpenSite() {
   const { recordVisit, preferences } = useLibrary();
+  const { notify } = useUi();
 
   return useCallback(
     (bookmark: Bookmark) => {
@@ -33,7 +35,14 @@ export function useOpenSite() {
         // Same reason as below: the window may be handed away before a normal
         // render would have committed the visit.
         flushSync(() => recordVisit(bookmark.id));
-        openInSystemBrowser(bookmark.url);
+        openInSystemBrowser(bookmark.url, () => {
+          notify('Your browser did not take the link.', {
+            label: 'Open here',
+            onClick: () => {
+              window.location.href = bookmark.url;
+            },
+          });
+        });
         return;
       }
       if (preferences.openLinksIn === 'sameTab') {
@@ -46,6 +55,6 @@ export function useOpenSite() {
       recordVisit(bookmark.id);
       window.open(bookmark.url, '_blank', 'noopener,noreferrer');
     },
-    [recordVisit, preferences.openLinksIn],
+    [recordVisit, preferences.openLinksIn, notify],
   );
 }
