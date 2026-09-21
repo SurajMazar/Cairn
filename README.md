@@ -151,12 +151,21 @@ connection. Navigations go to the network first, so a new deploy is picked up
 straight away. It is registered only in a production build, and registration
 failures are swallowed: the app works fine without it.
 
-**Updates.** A new build installs in the background and then waits. Nothing is
+**Updates.** Each build is stamped with the commit it came from, and the service
+worker is registered with that id in the URL. This is load bearing: the browser
+decides whether a worker has changed by byte-comparing the script, and `sw.js`
+is a static file whose contents are identical between builds, so without the id
+no update is ever detected and the only way to get new code is to reinstall the
+app. The id doubles as the cache name, so each build starts clean and the
+previous one is dropped.
+
+A new build installs in the background and then waits. Nothing is
 swapped until you accept the prompt, because a worker that takes over
 immediately can leave a half-updated app in front of someone mid-task. Accepting
 hands over to the waiting worker and reloads once it is in control. Installed
 copies re-check whenever you come back to the app, and Settings has a manual
-check.
+check, alongside the installed build id and a force refresh that clears the
+cache for a copy that is stuck.
 
 **No third-party requests.** The webfonts are self-hosted from `public/fonts`,
 so with the favicon setting off Cairn loads nothing from anyone else. That keeps

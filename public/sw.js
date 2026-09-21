@@ -6,7 +6,11 @@
   picked up immediately, with the cached page as the fallback. Build assets
   carry content hashes in their names, so they are safe to serve from cache.
 */
-const CACHE = 'cairn-v2';
+/* The registration carries the build id as ?v=, which is what makes the browser
+   see a new worker at all, and it doubles as the cache name so each build gets
+   a clean cache and the previous one is dropped on activate. */
+const VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
+const CACHE = `cairn-${VERSION}`;
 const OFFLINE_URL = 'index.html';
 
 /* The Latin faces are precached so a first offline launch looks right.

@@ -5,7 +5,14 @@ import { useLibrary } from '../context/LibraryContext';
 import { useUi } from '../context/UiContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { isStandalone } from '../hooks/useOpenSite';
-import { applyUpdate, checkForUpdate, isSupported, isUpdateReady } from '../lib/serviceWorker';
+import {
+  applyUpdate,
+  BUILD_ID,
+  checkForUpdate,
+  hardRefresh,
+  isSupported,
+  isUpdateReady,
+} from '../lib/serviceWorker';
 import { SORT_LABELS } from '../lib/search';
 import { buildExport, downloadJson, exportFilename, parseImport, type ImportReport } from '../storage/transfer';
 import { STORAGE_VERSION } from '../storage';
@@ -305,7 +312,20 @@ export function SettingsPage() {
             ? 'A new version downloads in the background and waits until you accept it, so an update never interrupts what you are doing. Installed copies check on their own each time you come back to the app.'
             : 'This browser does not support background updates, so reloading the page is enough to pick up a new version.'}
         </p>
-        <div className={styles.actions}>
+        <div className={styles.setting}>
+          <div className={styles.settingText}>
+            <p className={styles.settingName}>Installed build</p>
+            <p className={styles.settingHint}>
+              Matches the commit this copy was built from. Compare it with the repository to see
+              whether you are behind.
+            </p>
+          </div>
+          <span className={ui.mono} style={{ fontSize: 'var(--text-sm)' }}>
+            {BUILD_ID}
+          </span>
+        </div>
+
+        <div className={styles.actions} style={{ marginTop: 'var(--space-4)' }}>
           <button
             type="button"
             className={ui.btn}
@@ -322,7 +342,14 @@ export function SettingsPage() {
               Reload to update
             </button>
           ) : null}
+          <button type="button" className={ui.btn} onClick={() => void hardRefresh()}>
+            Force refresh
+          </button>
         </div>
+        <p className={ui.hint} style={{ marginTop: 'var(--space-3)' }}>
+          Force refresh clears the offline cache and fetches everything again, for a copy that is
+          stuck on an old build. Your bookmarks and notes are not touched.
+        </p>
         {updateState === 'current' ? <p className={ui.hint}>You are on the latest version.</p> : null}
         {updateState === 'unsupported' ? (
           <p className={ui.hint}>

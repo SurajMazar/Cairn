@@ -6,6 +6,8 @@
  * over and the page reloads once it has. That avoids a half-updated app, and
  * it means an update never interrupts what someone is in the middle of.
  */
+export const BUILD_ID = __BUILD_ID__;
+
 type UpdateListener = (ready: boolean) => void;
 
 const listeners = new Set<UpdateListener>();
@@ -54,7 +56,12 @@ export async function registerServiceWorker(): Promise<void> {
   });
 
   try {
-    const reg = await navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`);
+    // The build id in the URL is what makes a new deploy visible to the
+    // browser, which otherwise byte-compares an unchanged sw.js and concludes
+    // there is nothing to do.
+    const reg = await navigator.serviceWorker.register(
+      `${import.meta.env.BASE_URL}sw.js?v=${encodeURIComponent(BUILD_ID)}`,
+    );
     registration = reg;
     trackWaiting(reg.waiting);
 
@@ -110,4 +117,26 @@ if (import.meta.env.DEV) {
   // Lets the update bar be exercised without a production build, where
   // service workers are not registered at all.
   window.addEventListener('cairn:simulate-update', () => announce(true));
+}
+
+/**
+ * Last resort for a copy that is stuck on an old build: drop every cache,
+ * unregister the worker and reload from the network. The library is in
+ * localStorage and is not touched.
+ */
+export async function hardRefresh(): Promise<void> {
+  try {
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
+    if (isSupported()) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((item) => item.unregister()));
+    }
+  } catch {
+    /* reload anyway */
+  }
+  reloading = true;
+  window.location.reload();
 }
