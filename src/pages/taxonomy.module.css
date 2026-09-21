@@ -1,0 +1,76 @@
+.createRow {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  max-width: 26rem;
+}
+
+.manageRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.manageMain {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.manageActions {
+  display: flex;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.editRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  width: 100%;
+}
+
+.tagCloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.tagCloudItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
+.tagCloudItem:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-sunken);
+}
+
+.tagCloudCount {
+  font-size: var(--text-xs);
+  color: var(--ink-soft);
+}
+
+.columns {
+  columns: 2;
+  column-gap: var(--space-6);
+}
+
+@media (max-width: 48rem) {
+  .columns {
+    columns: 1;
+  }
+}

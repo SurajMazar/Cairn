@@ -1,0 +1,123 @@
+.hero {
+  margin-bottom: var(--space-6);
+}
+
+.greeting {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  margin-bottom: var(--space-2);
+}
+
+.heroTitle {
+  font-size: var(--text-2xl);
+  letter-spacing: -0.012em;
+}
+
+.summary {
+  margin-top: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+
+.searchForm {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: var(--space-5) 0 var(--space-7);
+}
+
+.searchIcon {
+  position: absolute;
+  left: var(--space-4);
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.875rem 1rem 0.875rem 2.875rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: var(--text-md);
+  font-family: var(--font-display);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+.miniList {
+  display: flex;
+  flex-direction: column;
+}
+
+.miniRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-2);
+  border-bottom: 1px solid var(--line-soft);
+  transition: background var(--duration) var(--ease);
+}
+
+.miniRow:hover {
+  background: var(--surface);
+}
+
+.miniBody {
+  min-width: 0;
+}
+
+.miniTitle {
+  display: block;
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  color: var(--ink-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.miniTitle:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.miniMeta {
+  display: flex;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.miniDomain {
+  font-family: var(--font-mono);
+}
+
+.miniWhen {
+  font-size: var(--text-xs);
+  color: var(--ink-soft);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+@media (max-width: 40rem) {
+  .miniWhen {
+    display: none;
+  }
+}

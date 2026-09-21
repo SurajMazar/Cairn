@@ -1,0 +1,145 @@
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: var(--space-3);
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.625rem 2.5rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: var(--text-base);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-wash);
+}
+
+.searchClear {
+  position: absolute;
+  right: var(--space-2);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.resultCount {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  margin-right: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.viewToggle {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.viewButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.125rem;
+  height: 2rem;
+  border: 0;
+  background: var(--surface);
+  color: var(--ink-soft);
+}
+
+.viewButton + .viewButton {
+  border-left: 1px solid var(--line-strong);
+}
+
+.viewButtonOn {
+  background: var(--accent-wash);
+  color: var(--ink-strong);
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.filterRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.tagStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  max-height: 7.5rem;
+  overflow-y: auto;
+}
+
+.activeSummary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+}
+
+@media (max-width: 40rem) {
+  .controls {
+    gap: var(--space-2);
+  }
+
+  .resultCount {
+    width: 100%;
+    margin-right: 0;
+  }
+}
