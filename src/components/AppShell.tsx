@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useLibrary } from '../context/LibraryContext';
 import { useUi } from '../context/UiContext';
 import { Sidebar } from './Sidebar';
@@ -69,6 +69,9 @@ export function AppShell() {
             <Icon name="menu" size={18} />
           </button>
           <span className={styles.topbarTitle}>{title}</span>
+          <Link className={ui.iconBtn} to="/web" aria-label="Search the web" title="Search the web">
+            <Icon name="search" size={18} />
+          </Link>
           <button
             type="button"
             className={`${ui.btn} ${ui.btnPrimary} ${ui.btnSmall}`}

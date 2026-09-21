@@ -6,6 +6,7 @@ import { useUi } from '../context/UiContext';
 import { applyFilters, buildSearchable, hasActiveFilters, searchBookmarks, SORT_LABELS } from '../lib/search';
 import type { MatchField } from '../lib/search';
 import { sortBookmarks } from '../lib/sort';
+import { SEARCH_ENGINES, openSearch } from '../lib/searchEngines';
 import { BookmarkRow } from './BookmarkRow';
 import { BookmarkTile } from './BookmarkTile';
 import { NoteEditorDialog } from './NoteEditorDialog';
@@ -45,6 +46,7 @@ export function CollectionView({
   initialQuery = '',
 }: CollectionViewProps) {
   const { categories, tags, preferences, setPreferences, addNote } = useLibrary();
+  const engine = SEARCH_ENGINES[preferences.searchEngine] ?? SEARCH_ENGINES.google;
   const { notify } = useUi();
 
   const [filters, setFilters] = useState<Filters>({ ...EMPTY_FILTERS, query: initialQuery });
@@ -282,11 +284,23 @@ export function CollectionView({
       ) : ordered.length === 0 ? (
         <EmptyState
           title="Nothing matched"
-          body="Search looks at titles, addresses, descriptions, categories, tags and every note. Try a shorter search, or clear the filters."
+          body="Search looks at titles, addresses, descriptions, categories, tags and every note. Try a shorter search, or take it to the web."
           action={
-            <button type="button" className={ui.btn} onClick={() => setFilters(EMPTY_FILTERS)}>
-              Clear all filters
-            </button>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+              {filters.query.trim() ? (
+                <button
+                  type="button"
+                  className={`${ui.btn} ${ui.btnPrimary}`}
+                  onClick={() => openSearch(engine.id, filters.query)}
+                >
+                  Search the web for "{filters.query.trim()}"
+                  <Icon name="external" size={13} />
+                </button>
+              ) : null}
+              <button type="button" className={ui.btn} onClick={() => setFilters(EMPTY_FILTERS)}>
+                Clear all filters
+              </button>
+            </div>
           }
         />
       ) : preferences.viewMode === 'grid' ? (

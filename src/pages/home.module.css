@@ -22,10 +22,28 @@
 }
 
 .searchForm {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+  margin: var(--space-5) 0 var(--space-7);
+}
+
+.searchField {
   position: relative;
   display: flex;
   align-items: center;
-  margin: var(--space-5) 0 var(--space-7);
+  flex: 1;
+  min-width: 0;
+}
+
+.webButton {
+  flex: none;
+}
+
+@media (max-width: 40rem) {
+  .searchForm {
+    flex-direction: column;
+  }
 }
 
 .searchIcon {

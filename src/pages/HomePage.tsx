@@ -6,6 +6,7 @@ import { Favicon } from '../components/Favicon';
 import { Icon } from '../components/Icon';
 import { EmptyState } from '../components/EmptyState';
 import { sortBookmarks } from '../lib/sort';
+import { SEARCH_ENGINES, openSearch } from '../lib/searchEngines';
 import { formatRelative, greeting } from '../lib/time';
 import type { Bookmark } from '../types';
 import styles from './home.module.css';
@@ -65,7 +66,7 @@ function Section({
 }
 
 export function HomePage() {
-  const { bookmarks, categories, tags } = useLibrary();
+  const { bookmarks, categories, tags, preferences } = useLibrary();
   const { openAddBookmark } = useUi();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
@@ -94,6 +95,16 @@ export function HomePage() {
   }, [bookmarks, categories]);
 
   const noteCount = bookmarks.reduce((total, bookmark) => total + bookmark.notes.length, 0);
+
+  const engine = SEARCH_ENGINES[preferences.searchEngine] ?? SEARCH_ENGINES.google;
+
+  const searchTheWeb = () => {
+    if (!query.trim()) {
+      navigate('/web');
+      return;
+    }
+    openSearch(engine.id, query);
+  };
 
   const submitSearch = (event?: React.FormEvent) => {
     event?.preventDefault();
@@ -137,23 +148,36 @@ export function HomePage() {
       </div>
 
       <form className={styles.searchForm} onSubmit={submitSearch} role="search">
-        <span className={styles.searchIcon}>
-          <Icon name="search" size={18} />
-        </span>
-        <input
-          className={styles.searchInput}
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search your collection..."
-          aria-label="Search your collection"
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              submitSearch();
-            }
-          }}
-        />
+        <div className={styles.searchField}>
+          <span className={styles.searchIcon}>
+            <Icon name="search" size={18} />
+          </span>
+          <input
+            className={styles.searchInput}
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search your collection..."
+            aria-label="Search your collection"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                submitSearch();
+              }
+            }}
+          />
+        </div>
+        {/* Same query, two destinations: Return searches the library, this
+            sends it out to the web. */}
+        <button
+          type="button"
+          className={`${ui.btn} ${ui.btnPrimary} ${styles.webButton}`}
+          onClick={searchTheWeb}
+          title={`Search ${engine.label} in a new tab`}
+        >
+          Search the web
+          <Icon name="external" size={13} />
+        </button>
       </form>
 
       <Section title="Recently updated" href="/recent">
