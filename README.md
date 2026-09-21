@@ -46,6 +46,29 @@ the app keeps working if you ever switch to `BrowserRouter`.
 **Anything else.** Serve `dist/` as-is. No environment variables, no build-time
 secrets, nothing to configure.
 
+## Installing it as an app
+
+Cairn ships a manifest and a service worker, so a phone or desktop browser will
+offer to install it. Installed, it opens in its own window with no browser
+chrome and works with no connection.
+
+The thing to know about an installed copy is what happens when you open a saved
+website, because it is the one action that leaves the app:
+
+- **New tab**, the default, hands the link to an in-app browser. On Android that
+  is a Custom Tab, on current iOS an in-app web view. Both have a close or back
+  control that returns you to Cairn exactly where you were.
+- **Same window** navigates in place. You return with the system back gesture.
+  This suits a phone if the in-app browser feels like too many layers.
+
+Settings has the choice, and says which one you are running under. Either way
+nothing is at risk: the library lives in `localStorage`, so even a full reload
+on the way back finds everything where you left it, including the visit that was
+just recorded.
+
+For sites that allow it, the Web view's embedded preview never leaves the app at
+all, which is the smoothest option of the three on a phone.
+
 ## How it is put together
 
 ```

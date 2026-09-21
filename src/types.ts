@@ -46,8 +46,11 @@ export type SortKey =
 
 export type ThemeChoice = 'system' | 'light' | 'dark';
 
+export type OpenLinksIn = 'newTab' | 'sameTab';
+
 export interface Preferences {
   theme: ThemeChoice;
+  openLinksIn: OpenLinksIn;
   viewMode: ViewMode;
   sortKey: SortKey;
   loadRemoteFavicons: boolean;

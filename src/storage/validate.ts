@@ -8,6 +8,7 @@ import type {
   BookmarkNote,
   Category,
   Tag,
+  OpenLinksIn,
   Preferences,
   SortKey,
   ThemeChoice,
@@ -130,11 +131,13 @@ export function normaliseTags(raw: unknown): Tag[] {
 }
 
 const THEMES: ThemeChoice[] = ['system', 'light', 'dark'];
+const OPEN_MODES: OpenLinksIn[] = ['newTab', 'sameTab'];
 const VIEW_MODES: ViewMode[] = ['list', 'grid'];
 const SORT_KEYS: SortKey[] = ['updated', 'added', 'visited', 'alpha', 'alphaReverse', 'notes'];
 
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
+  openLinksIn: 'newTab',
   viewMode: 'list',
   sortKey: 'updated',
   loadRemoteFavicons: false,
@@ -151,6 +154,9 @@ export function normalisePreferences(raw: unknown): Preferences {
     : DEFAULT_PREFERENCES.sortKey;
   return {
     theme: THEMES.includes(raw.theme as ThemeChoice) ? (raw.theme as ThemeChoice) : DEFAULT_PREFERENCES.theme,
+    openLinksIn: OPEN_MODES.includes(raw.openLinksIn as OpenLinksIn)
+      ? (raw.openLinksIn as OpenLinksIn)
+      : DEFAULT_PREFERENCES.openLinksIn,
     viewMode,
     sortKey,
     loadRemoteFavicons: raw.loadRemoteFavicons === true,

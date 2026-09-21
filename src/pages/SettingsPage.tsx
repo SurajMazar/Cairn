@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState } from 'react';
-import type { LibraryData, SortKey, ThemeChoice, ViewMode } from '../types';
+import type { LibraryData, OpenLinksIn, SortKey, ThemeChoice, ViewMode } from '../types';
 import { useLibrary } from '../context/LibraryContext';
 import { useUi } from '../context/UiContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { isStandalone } from '../hooks/useOpenSite';
 import { SORT_LABELS } from '../lib/search';
 import { buildExport, downloadJson, exportFilename, parseImport, type ImportReport } from '../storage/transfer';
 import { STORAGE_VERSION } from '../storage';
@@ -19,6 +20,11 @@ const THEMES: Array<{ value: ThemeChoice; label: string }> = [
 const VIEWS: Array<{ value: ViewMode; label: string }> = [
   { value: 'list', label: 'List' },
   { value: 'grid', label: 'Grid' },
+];
+
+const OPEN_MODES: Array<{ value: OpenLinksIn; label: string }> = [
+  { value: 'newTab', label: 'New tab' },
+  { value: 'sameTab', label: 'Same window' },
 ];
 
 export function SettingsPage() {
@@ -42,6 +48,7 @@ export function SettingsPage() {
   const [confirmReset, setConfirmReset] = useState(false);
 
   const noteCount = bookmarks.reduce((total, bookmark) => total + bookmark.notes.length, 0);
+  const installed = isStandalone();
 
   const approximateSize = useMemo(() => {
     const bytes = new Blob([JSON.stringify({ bookmarks, categories, tags })]).size;
@@ -104,6 +111,32 @@ export function SettingsPage() {
                 }`}
                 onClick={() => setPreferences({ theme: option.value })}
                 aria-pressed={preferences.theme === option.value}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.setting}>
+          <div className={styles.settingText}>
+            <p className={styles.settingName}>Open saved websites in</p>
+            <p className={styles.settingHint}>
+              {installed
+                ? 'You are running this as an installed app. A new tab hands the link to an in-app browser you can back out of; same window replaces this view and relies on the back gesture to return. Your library is untouched either way.'
+                : 'A new tab keeps this page where it is. Same window replaces it, which suits an installed app on a phone.'}
+            </p>
+          </div>
+          <div className={styles.segmented} role="group" aria-label="Open saved websites in">
+            {OPEN_MODES.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={`${styles.segment} ${
+                  preferences.openLinksIn === option.value ? styles.segmentOn : ''
+                }`}
+                onClick={() => setPreferences({ openLinksIn: option.value })}
+                aria-pressed={preferences.openLinksIn === option.value}
               >
                 {option.label}
               </button>
