@@ -15,6 +15,7 @@ import type {
   ViewMode,
 } from '../types';
 import { createId, nowIso } from '../lib/id';
+import { SEARCH_ENGINE_IDS, type SearchEngineId } from '../lib/searchEngines';
 import { domainFromUrl, normaliseUrl } from '../lib/url';
 
 type Dict = Record<string, unknown>;
@@ -138,6 +139,7 @@ const SORT_KEYS: SortKey[] = ['updated', 'added', 'visited', 'alpha', 'alphaReve
 export const DEFAULT_PREFERENCES: Preferences = {
   theme: 'system',
   openLinksIn: 'newTab',
+  searchEngine: 'google',
   viewMode: 'list',
   sortKey: 'updated',
   loadRemoteFavicons: false,
@@ -157,6 +159,9 @@ export function normalisePreferences(raw: unknown): Preferences {
     openLinksIn: OPEN_MODES.includes(raw.openLinksIn as OpenLinksIn)
       ? (raw.openLinksIn as OpenLinksIn)
       : DEFAULT_PREFERENCES.openLinksIn,
+    searchEngine: SEARCH_ENGINE_IDS.includes(raw.searchEngine as SearchEngineId)
+      ? (raw.searchEngine as SearchEngineId)
+      : DEFAULT_PREFERENCES.searchEngine,
     viewMode,
     sortKey,
     loadRemoteFavicons: raw.loadRemoteFavicons === true,

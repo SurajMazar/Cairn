@@ -1,3 +1,5 @@
+import type { SearchEngineId } from './lib/searchEngines';
+
 export interface BookmarkNote {
   id: string;
   content: string;
@@ -48,9 +50,12 @@ export type ThemeChoice = 'system' | 'light' | 'dark';
 
 export type OpenLinksIn = 'newTab' | 'sameTab';
 
+export type { SearchEngineId } from './lib/searchEngines';
+
 export interface Preferences {
   theme: ThemeChoice;
   openLinksIn: OpenLinksIn;
+  searchEngine: SearchEngineId;
   viewMode: ViewMode;
   sortKey: SortKey;
   loadRemoteFavicons: boolean;

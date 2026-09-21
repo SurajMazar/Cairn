@@ -5,27 +5,25 @@ import { useUi } from '../context/UiContext';
 import { useOpenSite } from '../hooks/useOpenSite';
 import { Favicon } from '../components/Favicon';
 import { Icon } from '../components/Icon';
-import { DIRECTORY, refusesEmbedding, searchDirectory, type DirectorySite } from '../lib/directory';
-import { domainFromUrl, isProbablyUrl, normaliseUrl, searchUrl, suggestTitleFromUrl } from '../lib/url';
+import { refusesEmbedding } from '../lib/embedding';
+import { SEARCH_ENGINES, openSearch } from '../lib/searchEngines';
+import { domainFromUrl, isProbablyUrl, normaliseUrl, suggestTitleFromUrl } from '../lib/url';
 import { sortBookmarks } from '../lib/sort';
-import { buildSearchable, searchBookmarks } from '../lib/search';
 import styles from './web.module.css';
 import page from '../styles/page.module.css';
 import ui from '../styles/ui.module.css';
-
-type Entry = { kind: 'site'; url: string } | { kind: 'search'; query: string };
 
 type FrameState = 'loading' | 'loaded' | 'blocked';
 
 const EMBED_TIMEOUT_MS = 6000;
 
 export function WebPage() {
-  const { bookmarks, categories, tags, preferences, setPreferences, findBookmarkByUrl } = useLibrary();
+  const { bookmarks, preferences, setPreferences, findBookmarkByUrl } = useLibrary();
   const { openAddBookmark } = useUi();
   const openSite = useOpenSite();
 
-  const [history, setHistory] = useState<Entry[]>(() =>
-    preferences.lastWebUrl ? [{ kind: 'site', url: preferences.lastWebUrl }] : [],
+  const [history, setHistory] = useState<string[]>(() =>
+    preferences.lastWebUrl ? [preferences.lastWebUrl] : [],
   );
   const [index, setIndex] = useState(() => (preferences.lastWebUrl ? 0 : -1));
   const [address, setAddress] = useState(preferences.lastWebUrl);
@@ -33,11 +31,18 @@ export function WebPage() {
   const [reloadKey, setReloadKey] = useState(0);
   const timerRef = useRef<number | undefined>(undefined);
   const frameRef = useRef<HTMLIFrameElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const engine = SEARCH_ENGINES[preferences.searchEngine] ?? SEARCH_ENGINES.google;
+  const currentUrl = index >= 0 && index < history.length ? history[index] : '';
+  const currentDomain = currentUrl ? domainFromUrl(currentUrl) : '';
+  const savedBookmark = currentUrl ? findBookmarkByUrl(currentUrl) : undefined;
+  const embeddable = Boolean(currentUrl) && !refusesEmbedding(currentDomain);
 
   /**
    * A frame refused by X-Frame-Options or a frame-ancestors policy still fires
-   * `load`, but it is left sitting on about:blank, which stays same-origin and
-   * therefore readable. A frame that really loaded is cross-origin and throws.
+   * `load`, but is left on about:blank, which stays same-origin and readable.
+   * A frame that really loaded is cross-origin and throws.
    */
   const frameLoadedSomething = useCallback(() => {
     const frame = frameRef.current;
@@ -52,14 +57,6 @@ export function WebPage() {
     }
   }, []);
 
-  const entry = index >= 0 && index < history.length ? history[index] : null;
-  const currentUrl = entry?.kind === 'site' ? entry.url : '';
-  const currentDomain = currentUrl ? domainFromUrl(currentUrl) : '';
-  const savedBookmark = currentUrl ? findBookmarkByUrl(currentUrl) : undefined;
-  const embeddable = Boolean(currentUrl) && !refusesEmbedding(currentDomain);
-
-  // A site that refuses framing must not leave an empty rectangle behind, so
-  // the known list is checked first and a timeout catches the rest.
   useEffect(() => {
     window.clearTimeout(timerRef.current);
     if (!currentUrl) return undefined;
@@ -73,16 +70,16 @@ export function WebPage() {
   }, [currentUrl, embeddable, reloadKey]);
 
   useEffect(() => {
-    if (entry?.kind === 'site' && entry.url !== preferences.lastWebUrl) {
-      setPreferences({ lastWebUrl: entry.url });
+    if (currentUrl && currentUrl !== preferences.lastWebUrl) {
+      setPreferences({ lastWebUrl: currentUrl });
     }
-  }, [entry, preferences.lastWebUrl, setPreferences]);
+  }, [currentUrl, preferences.lastWebUrl, setPreferences]);
 
-  const push = useCallback(
-    (next: Entry) => {
-      setHistory((current) => [...current.slice(0, index + 1), next]);
+  const preview = useCallback(
+    (url: string) => {
+      setHistory((current) => [...current.slice(0, index + 1), url]);
       setIndex((current) => current + 1);
-      setAddress(next.kind === 'site' ? next.url : next.query);
+      setAddress(url);
     },
     [index],
   );
@@ -91,15 +88,25 @@ export function WebPage() {
     const target = index + offset;
     if (target < 0 || target >= history.length) return;
     setIndex(target);
-    const next = history[target];
-    setAddress(next.kind === 'site' ? next.url : next.query);
+    setAddress(history[target]);
   };
+
+  /** Search always leaves for a real browser tab; this app cannot read results. */
+  const search = useCallback(() => {
+    const value = address.trim();
+    if (!value) {
+      inputRef.current?.focus();
+      return;
+    }
+    openSearch(engine.id, value);
+  }, [address, engine.id]);
 
   const submit = (event?: React.FormEvent) => {
     event?.preventDefault();
     const value = address.trim();
     if (!value) return;
-    push(isProbablyUrl(value) ? { kind: 'site', url: normaliseUrl(value) } : { kind: 'search', query: value });
+    if (isProbablyUrl(value)) preview(normaliseUrl(value));
+    else openSearch(engine.id, value);
   };
 
   const openExternally = (url: string) => {
@@ -111,74 +118,10 @@ export function WebPage() {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const saveSite = (url: string, title?: string) => {
-    openAddBookmark({ url, title: title ?? suggestTitleFromUrl(url) });
-  };
-
-  const directoryResults = useMemo(
-    () => (entry?.kind === 'search' ? searchDirectory(entry.query) : []),
-    [entry],
-  );
-
-  const libraryResults = useMemo(() => {
-    if (entry?.kind !== 'search') return [];
-    const searchable = buildSearchable(bookmarks, categories, tags);
-    return searchBookmarks(searchable, entry.query).slice(0, 5);
-  }, [entry, bookmarks, categories, tags]);
-
   const recentlyVisited = useMemo(
-    () => sortBookmarks(bookmarks.filter((item) => item.lastVisitedAt), 'visited').slice(0, 5),
+    () => sortBookmarks(bookmarks.filter((item) => item.lastVisitedAt), 'visited').slice(0, 6),
     [bookmarks],
   );
-
-  const startingPoints = useMemo(() => DIRECTORY.slice(0, 8), []);
-
-  const renderResult = (site: DirectorySite) => {
-    const saved = findBookmarkByUrl(site.url);
-    return (
-      <article key={site.url} className={styles.result}>
-        <div>
-          <a
-            className={styles.resultTitle}
-            href={site.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(event) => {
-              event.preventDefault();
-              push({ kind: 'site', url: site.url });
-            }}
-          >
-            {site.title}
-          </a>
-          <p className={styles.resultUrl}>{domainFromUrl(site.url)}</p>
-          <p className={styles.resultDescription}>{site.description}</p>
-        </div>
-        <div className={styles.resultActions}>
-          <button
-            type="button"
-            className={`${ui.btn} ${ui.btnSmall}`}
-            onClick={() => openExternally(site.url)}
-          >
-            Open
-            <Icon name="external" size={12} />
-          </button>
-          {saved ? (
-            <Link className={`${ui.btn} ${ui.btnSmall}`} to={`/bookmarks/${saved.id}`}>
-              In library
-            </Link>
-          ) : (
-            <button
-              type="button"
-              className={`${ui.btn} ${ui.btnSmall} ${ui.btnPrimary}`}
-              onClick={() => saveSite(site.url, site.title)}
-            >
-              Save
-            </button>
-          )}
-        </div>
-      </article>
-    );
-  };
 
   return (
     <div className={styles.wrap}>
@@ -219,14 +162,14 @@ export function WebPage() {
         <form className={styles.addressForm} onSubmit={submit} role="search">
           <Icon name="search" size={14} />
           <input
+            ref={inputRef}
             className={styles.address}
             value={address}
             onChange={(event) => setAddress(event.target.value)}
-            placeholder="Search the web or enter a URL"
-            aria-label="Search the web or enter a URL"
+            placeholder={`Search ${engine.label} or enter a URL`}
+            aria-label={`Search ${engine.label} or enter a URL`}
             autoComplete="off"
             spellCheck={false}
-            inputMode="url"
             onKeyDown={(event) => {
               if (event.key === 'Enter') {
                 event.preventDefault();
@@ -235,6 +178,16 @@ export function WebPage() {
             }}
           />
         </form>
+
+        <button
+          type="button"
+          className={`${ui.btn} ${ui.btnPrimary} ${styles.searchButton}`}
+          onClick={search}
+          title={`Search ${engine.label} in a new tab`}
+        >
+          Search
+          <Icon name="external" size={12} />
+        </button>
 
         <div className={styles.barActions}>
           {currentUrl ? (
@@ -256,8 +209,8 @@ export function WebPage() {
               ) : (
                 <button
                   type="button"
-                  className={`${ui.btn} ${ui.btnSmall} ${ui.btnPrimary}`}
-                  onClick={() => saveSite(currentUrl)}
+                  className={`${ui.btn} ${ui.btnSmall}`}
+                  onClick={() => openAddBookmark({ url: currentUrl, title: suggestTitleFromUrl(currentUrl) })}
                 >
                   Save
                 </button>
@@ -268,22 +221,16 @@ export function WebPage() {
       </div>
 
       <div className={styles.stage}>
-        {entry === null ? (
+        {!currentUrl ? (
           <div className={styles.panel}>
             <header className={page.header}>
               <h1 className={page.title}>Web</h1>
               <p className={page.lede}>
-                Search or type an address above. Websites that allow it open here; the rest open in a
-                new tab. Either way you can save them to your library in one step.
+                Type anything above and press Return. A search opens in a new browser tab, because
+                this app has no server and cannot read a results page. A link opens here as a preview
+                you can save from.
               </p>
             </header>
-
-            <section className={page.section}>
-              <div className={page.sectionHead}>
-                <h2 className={page.sectionTitle}>Starting points</h2>
-              </div>
-              <div className={styles.results}>{startingPoints.map(renderResult)}</div>
-            </section>
 
             {recentlyVisited.length > 0 ? (
               <section className={page.section}>
@@ -309,62 +256,14 @@ export function WebPage() {
                         <button
                           type="button"
                           className={`${ui.btn} ${ui.btnSmall}`}
-                          onClick={() => push({ kind: 'site', url: bookmark.url })}
+                          onClick={() => preview(bookmark.url)}
                         >
-                          Open here
+                          Preview
                         </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ) : null}
-          </div>
-        ) : entry.kind === 'search' ? (
-          <div className={styles.panel}>
-            <header className={page.header}>
-              <p className={page.kicker}>Search</p>
-              <h1 className={page.title}>{entry.query}</h1>
-            </header>
-
-            <div className={styles.searchOut}>
-              <p className={styles.searchOutText}>
-                This app has no server, so it cannot read a search engine's results page. Run the search
-                in a new tab and come back here to save whatever you find.
-              </p>
-              <a
-                className={`${ui.btn} ${ui.btnPrimary}`}
-                href={searchUrl(entry.query)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Search Google
-                <Icon name="external" size={13} />
-              </a>
-            </div>
-
-            {libraryResults.length > 0 ? (
-              <section className={page.section}>
-                <div className={page.sectionHead}>
-                  <h2 className={page.sectionTitle}>Already in your library</h2>
-                </div>
-                <div className={styles.results}>
-                  {libraryResults.map((result) => (
-                    <article key={result.bookmark.id} className={styles.result}>
-                      <div>
-                        <Link className={styles.resultTitle} to={`/bookmarks/${result.bookmark.id}`}>
-                          {result.bookmark.title}
-                        </Link>
-                        <p className={styles.resultUrl}>{result.bookmark.domain}</p>
-                        {result.bookmark.description ? (
-                          <p className={styles.resultDescription}>{result.bookmark.description}</p>
-                        ) : null}
-                      </div>
-                      <div className={styles.resultActions}>
                         <button
                           type="button"
                           className={`${ui.btn} ${ui.btnSmall}`}
-                          onClick={() => openSite(result.bookmark)}
+                          onClick={() => openSite(bookmark)}
                         >
                           Open
                           <Icon name="external" size={12} />
@@ -375,20 +274,6 @@ export function WebPage() {
                 </div>
               </section>
             ) : null}
-
-            <section className={page.section}>
-              <div className={page.sectionHead}>
-                <h2 className={page.sectionTitle}>From the built-in directory</h2>
-              </div>
-              {directoryResults.length === 0 ? (
-                <p className={ui.hint}>
-                  Nothing in the built-in list matches that. Run the search above, then save the result
-                  you want to keep.
-                </p>
-              ) : (
-                <div className={styles.results}>{directoryResults.map(renderResult)}</div>
-              )}
-            </section>
           </div>
         ) : frameState === 'blocked' ? (
           <div className={styles.panel}>
@@ -422,7 +307,11 @@ export function WebPage() {
                     </span>
                   </Link>
                 ) : (
-                  <button type="button" className={ui.btn} onClick={() => saveSite(currentUrl)}>
+                  <button
+                    type="button"
+                    className={ui.btn}
+                    onClick={() => openAddBookmark({ url: currentUrl, title: suggestTitleFromUrl(currentUrl) })}
+                  >
                     Save to library
                   </button>
                 )}

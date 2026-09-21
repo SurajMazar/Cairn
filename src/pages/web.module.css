@@ -211,3 +211,13 @@
     padding: var(--space-5) var(--space-4) var(--space-7);
   }
 }
+
+.searchButton {
+  flex: none;
+}
+
+@media (max-width: 52rem) {
+  .searchButton {
+    order: 2;
+  }
+}

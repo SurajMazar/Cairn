@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import type { LibraryData, OpenLinksIn, SortKey, ThemeChoice, ViewMode } from '../types';
+import { SEARCH_ENGINES, SEARCH_ENGINE_IDS, type SearchEngineId } from '../lib/searchEngines';
 import { useLibrary } from '../context/LibraryContext';
 import { useUi } from '../context/UiContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -116,6 +117,30 @@ export function SettingsPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className={styles.setting}>
+          <div className={styles.settingText}>
+            <p className={styles.settingName}>Search the web with</p>
+            <p className={styles.settingHint}>
+              {SEARCH_ENGINES[preferences.searchEngine].appIntercepts
+                ? 'Searches open in a new browser tab. On a phone with the Google app installed, the system may hand the search to that app instead, which a web page cannot prevent. The other engines here are not claimed by an app, so they always land in a tab.'
+                : 'Searches open in a new browser tab. No installed app claims this engine, so it will not be intercepted on a phone.'}
+            </p>
+          </div>
+          <select
+            className={ui.select}
+            style={{ width: 'auto' }}
+            value={preferences.searchEngine}
+            onChange={(event) => setPreferences({ searchEngine: event.target.value as SearchEngineId })}
+            aria-label="Search the web with"
+          >
+            {SEARCH_ENGINE_IDS.map((id) => (
+              <option key={id} value={id}>
+                {SEARCH_ENGINES[id].label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className={styles.setting}>

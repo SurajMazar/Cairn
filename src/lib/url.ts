@@ -3,8 +3,6 @@
  * derived from the URL itself rather than scraped.
  */
 
-const SEARCH_ENGINE = 'https://www.google.com/search?q=';
-
 export function normaliseUrl(input: string): string {
   const trimmed = input.trim();
   if (!trimmed) return '';
@@ -33,17 +31,6 @@ export function domainFromUrl(input: string): string {
   const url = parseUrl(input);
   if (!url) return '';
   return url.hostname.replace(/^www\./, '');
-}
-
-export function searchUrl(query: string): string {
-  return `${SEARCH_ENGINE}${encodeURIComponent(query)}`;
-}
-
-/** Turn an address bar entry into either a destination URL or a web search. */
-export function resolveAddressBarInput(input: string): string {
-  const trimmed = input.trim();
-  if (!trimmed) return '';
-  return isProbablyUrl(trimmed) ? normaliseUrl(trimmed) : searchUrl(trimmed);
 }
 
 const WORD_OVERRIDES: Record<string, string> = {
