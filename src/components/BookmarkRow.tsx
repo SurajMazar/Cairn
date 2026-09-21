@@ -7,6 +7,7 @@ import { useLibrary } from '../context/LibraryContext';
 import { useUi } from '../context/UiContext';
 import { useOpenSite } from '../hooks/useOpenSite';
 import { useBookmarkActions } from '../hooks/useBookmarkActions';
+import { canRequestBrave } from '../lib/externalBrowser';
 import { Favicon } from './Favicon';
 import { Icon } from './Icon';
 import { Menu } from './Menu';
@@ -134,7 +135,9 @@ export function BookmarkRow({ bookmark, matchedFields = [], onAddNote }: Bookmar
           items={[
             { label: 'Copy link', onSelect: () => void copyLink(bookmark) },
             { label: 'Open in default browser', onSelect: () => openInDefaultBrowser(bookmark) },
-            { label: 'Open in Brave', onSelect: () => void openInBrave(bookmark) },
+            ...(canRequestBrave()
+              ? [{ label: 'Open in Brave', onSelect: () => void openInBrave(bookmark) }]
+              : []),
             { label: 'Edit', onSelect: () => openEditBookmark(bookmark), separatorBefore: true },
             { label: 'Delete', onSelect: () => setConfirmDelete(true), danger: true },
           ]}

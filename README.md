@@ -134,14 +134,21 @@ app instead of a browser tab, and a web page has no way to refuse that. Settings
 offers Brave Search, DuckDuckGo and Startpage, none of which are claimed by an
 installed app.
 
-**Opening links.** Every bookmark has Open, which uses your default browser,
-plus Copy link and Open in Brave behind the row's More menu. A web page cannot
-choose which browser handles a link, so Open in Brave asks the operating system
-to handle a `brave://open-url` link (an `intent://` link on Android). That works
-when the current browser will pass it on, such as Brave on iOS or a non Chromium
-browser on the desktop, and Chromium based browsers block it silently. Since
-success cannot be detected, the address is copied to your clipboard at the same
-time and the confirmation says so rather than claiming it worked.
+**Opening links.** Every bookmark has Open, plus Copy link, Open in default
+browser and Open in Brave behind the row's More menu.
+
+A web page cannot choose which browser handles a link. All these actions can do
+is ask the operating system to handle a browser-specific URL and see whether
+anything claims it. Two constraints shape the implementation: the navigation has
+to be top level and inside the user gesture, because both WebKit and Chromium
+block custom schemes from the hidden iframe most snippets still use; and a
+Chromium based browser refuses navigation to its own internal schemes from web
+content, so `brave://` cannot work from inside Brave or Chrome on the desktop.
+The Brave action is therefore hidden where it provably cannot work.
+
+Success is not observable, so every handoff arms a fallback: if the page is
+still in front a moment later, nothing claimed the link and it opens normally
+instead. The action is never a no-op.
 
 **Favicons are opt-in.** Fetching them would tell a third party which sites you
 have saved, so a letter mark is used until you turn the setting on in Settings.

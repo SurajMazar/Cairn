@@ -5,6 +5,7 @@ import { useLibrary } from '../context/LibraryContext';
 import { useUi } from '../context/UiContext';
 import { useOpenSite } from '../hooks/useOpenSite';
 import { useBookmarkActions } from '../hooks/useBookmarkActions';
+import { canRequestBrave } from '../lib/externalBrowser';
 import { Favicon } from '../components/Favicon';
 import { Icon } from '../components/Icon';
 import { EmptyState } from '../components/EmptyState';
@@ -104,14 +105,16 @@ export function BookmarkDetailPage() {
           <Icon name="copy" size={13} />
           Copy link
         </button>
-        <button
-          type="button"
-          className={ui.btn}
-          onClick={() => void openInBrave(bookmark)}
-          title="Asks your system to open this link in Brave"
-        >
-          Open in Brave
-        </button>
+        {canRequestBrave() ? (
+          <button
+            type="button"
+            className={ui.btn}
+            onClick={() => void openInBrave(bookmark)}
+            title="Asks your system to open this link in Brave"
+          >
+            Open in Brave
+          </button>
+        ) : null}
       </div>
 
       {category || tags.length > 0 ? (

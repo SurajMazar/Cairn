@@ -1,15 +1,20 @@
 /**
- * Handing a link to Brave.
+ * Handing a link to another browser.
  *
  * A web page cannot choose which browser opens a link. What it can do is ask
- * the operating system to handle a Brave specific URL, which works when the
- * current browser is willing to pass it on (Brave on iOS, an Android intent,
- * or a non Chromium browser on the desktop). Chromium based browsers block
- * navigation to their own internal schemes, so the attempt quietly does
- * nothing there.
+ * the operating system to handle a browser-specific URL and hope something
+ * claims it. Two things decide whether that works at all:
  *
- * Because success cannot be detected, every caller also puts the plain URL on
- * the clipboard, so there is always a way to finish the job by hand.
+ * - The navigation has to be top level and inside the user gesture. WebKit and
+ *   Chromium both block custom scheme navigation from a hidden iframe, which is
+ *   the technique most of the snippets on the web still use.
+ * - Chromium based browsers refuse navigation to their own internal schemes
+ *   from web content, so `brave://` cannot work from inside Brave or Chrome on
+ *   the desktop. Nothing can be done about that.
+ *
+ * Success is not observable, so every handoff arms a fallback: if the page is
+ * still in front shortly afterwards, nothing claimed the link and it is opened
+ * normally instead. That way the action is never a no-op.
  */
 import { parseUrl } from './url';
 
@@ -23,106 +28,94 @@ function isIos(): boolean {
   return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
 }
 
+export function isMobile(): boolean {
+  return isIos() || isAndroid();
+}
+
+const HANDOFF_GRACE_MS = 1200;
+
 /**
- * Navigate without tripping the popup blocker or the "address is invalid"
- * alert an unhandled scheme can raise. A hidden frame absorbs both.
+ * Attempt `link`, and fall back to `fallbackUrl` if the page never goes away.
+ * The fallback navigates rather than calling window.open, because by then the
+ * user gesture has expired and a popup would be blocked.
  */
-function tryScheme(link: string): void {
-  const frame = document.createElement('iframe');
-  frame.style.display = 'none';
-  frame.setAttribute('aria-hidden', 'true');
-  document.body.appendChild(frame);
+function handOff(link: string, fallbackUrl: string): void {
+  let left = false;
+  const markLeft = () => {
+    left = true;
+  };
+  document.addEventListener('visibilitychange', markLeft, { once: true });
+  window.addEventListener('pagehide', markLeft, { once: true });
+  window.addEventListener('blur', markLeft, { once: true });
+
   try {
-    if (frame.contentWindow) frame.contentWindow.location.href = link;
-    else window.location.href = link;
+    window.location.href = link;
   } catch {
-    /* the caller's fallback handles it */
+    /* the fallback below covers it */
   }
-  window.setTimeout(() => frame.remove(), 1500);
+
+  window.setTimeout(() => {
+    document.removeEventListener('visibilitychange', markLeft);
+    window.removeEventListener('pagehide', markLeft);
+    window.removeEventListener('blur', markLeft);
+    if (left || document.hidden) return;
+    window.location.href = fallbackUrl;
+  }, HANDOFF_GRACE_MS);
+}
+
+/** An Android intent, optionally pinned to one browser package. */
+function androidIntent(url: URL, packageName?: string): string {
+  const rest = `${url.host}${url.pathname}${url.search}${url.hash}`;
+  const scheme = url.protocol.replace(':', '');
+  const pkg = packageName ? `package=${packageName};` : '';
+  return (
+    `intent://${rest}#Intent;scheme=${scheme};${pkg}` +
+    `S.browser_fallback_url=${encodeURIComponent(url.href)};end`
+  );
 }
 
 export function braveLinkFor(rawUrl: string): string {
   const url = parseUrl(rawUrl);
   if (!url) return rawUrl;
-
-  if (isAndroid()) {
-    const withoutScheme = `${url.host}${url.pathname}${url.search}${url.hash}`;
-    return (
-      `intent://${withoutScheme}#Intent;scheme=${url.protocol.replace(':', '')};` +
-      `package=com.brave.browser;S.browser_fallback_url=${encodeURIComponent(url.href)};end`
-    );
-  }
-
+  if (isAndroid()) return androidIntent(url, 'com.brave.browser');
   return `brave://open-url?url=${encodeURIComponent(url.href)}`;
 }
 
-/** Best effort. There is no way to learn whether the handoff succeeded. */
+/**
+ * Brave cannot be reached from a Chromium based desktop browser, since it
+ * blocks navigation to brave:// from web content. The menu uses this to avoid
+ * offering an action that provably cannot work.
+ */
+export function canRequestBrave(): boolean {
+  return isMobile();
+}
+
 export function requestBrave(rawUrl: string): void {
-  const link = braveLinkFor(rawUrl);
-  const frame = document.createElement('iframe');
-  frame.style.display = 'none';
-  frame.setAttribute('aria-hidden', 'true');
-  document.body.appendChild(frame);
-  try {
-    if (frame.contentWindow) frame.contentWindow.location.href = link;
-    else window.location.href = link;
-  } catch {
-    try {
-      window.location.href = link;
-    } catch {
-      /* the clipboard copy is the fallback */
-    }
-  }
-  window.setTimeout(() => frame.remove(), 1500);
+  const url = parseUrl(rawUrl);
+  if (!url) return;
+  handOff(braveLinkFor(url.href), url.href);
 }
 
 /**
  * Push a link out to the system's own browser instead of the in-app web view.
  *
- * This matters inside an installed web app. On iOS a Home Screen app is its own
- * WebKit container, so Safari's content blockers do not apply to anything it
- * opens; getting the link into Safari proper is what makes an ad blocker work
- * again. There is no standard API for it, so each platform gets the nearest
- * thing it has:
- *
- * - iOS: the x-safari-https scheme, which the system routes to Safari.
- * - Android: an intent with no package named, so the system hands it to
- *   whichever browser is set as default.
- * - Everywhere else: a normal new tab, which is already the default browser.
- *
- * None of these report success, so if the page is still in front after a
- * moment, the handoff is assumed to have failed and the link is opened
- * normally. Same-window navigation is used for that fallback because a
- * deferred window.open is treated as a popup and blocked.
+ * This matters inside an installed web app, which is its own browser container:
+ * content blockers and logins from the real browser do not reach anything it
+ * opens. On iOS the x-safari-https scheme targets Safari specifically, since no
+ * scheme exists for "whatever the default browser is".
  */
 export function openInSystemBrowser(rawUrl: string): void {
   const url = parseUrl(rawUrl);
   if (!url) return;
 
-  if (!isIos() && !isAndroid()) {
+  if (!isMobile()) {
     window.open(url.href, '_blank', 'noopener,noreferrer');
     return;
   }
 
-  const rest = `${url.host}${url.pathname}${url.search}${url.hash}`;
   const link = isIos()
-    ? `x-safari-${url.protocol.replace(':', '')}://${rest}`
-    : `intent://${rest}#Intent;scheme=${url.protocol.replace(':', '')};` +
-      `S.browser_fallback_url=${encodeURIComponent(url.href)};end`;
+    ? `x-safari-${url.protocol.replace(':', '')}://${url.host}${url.pathname}${url.search}${url.hash}`
+    : androidIntent(url);
 
-  let handedOff = false;
-  const markHandedOff = () => {
-    handedOff = true;
-  };
-  document.addEventListener('visibilitychange', markHandedOff, { once: true });
-  window.addEventListener('pagehide', markHandedOff, { once: true });
-
-  tryScheme(link);
-
-  window.setTimeout(() => {
-    document.removeEventListener('visibilitychange', markHandedOff);
-    window.removeEventListener('pagehide', markHandedOff);
-    if (handedOff || document.hidden) return;
-    window.location.href = url.href;
-  }, 1200);
+  handOff(link, url.href);
 }
